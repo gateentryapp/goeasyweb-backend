@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shift Report</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    h2 {
+      text-align: center;
+    }
+    #shift-person {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: #2d3436;
+    }
+    textarea {
+      width: 100%;
+      height: 300px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .btn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      background-color: #00b894;
+      color: white;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #019374;
+    }
+  </style>
+</head>
+<body>
+  <h2>Shift Person Report</h2>
+  <div id="shift-person">Shift Person: </div>
+  <textarea placeholder="Write your shift report here..."></textarea><br/>
+  <button class="btn" onclick="saveReport()">Save Report</button>
+
+  <script>
+    // Show logged-in shift person
+    const username = localStorage.getItem("loggedInUser");
+    if (username) {
+      document.getElementById("shift-person").innerText = "Shift Person: " + username;
+    } else {
+      document.getElementById("shift-person").innerText = "Shift Person: Not Logged In";
+    }
+
+    function saveReport() {
+      const content = document.querySelector('textarea').value;
+      if (content.trim()) {
+        localStorage.setItem("shift_report_" + username, content);
+        alert("Shift report saved successfully.");
+      } else {
+        alert("Please write something before saving.");
+      }
+    }
+
+    window.onload = () => {
+      const saved = localStorage.getItem("shift_report_" + username);
+      if (saved) document.querySelector("textarea").value = saved;
+    };
+  </script>
+</body>
+</html>

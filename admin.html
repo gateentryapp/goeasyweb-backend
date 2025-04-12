@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel - BALAJI ACTION BUILDEWELL PRIVATE LTD</title>
+  <style>
+    body {
+      font-family: Arial;
+      background-color: #f0f0f0;
+      margin: 0;
+    }
+    header, footer {
+      background-color: #004080;
+      color: white;
+      padding: 10px;
+      text-align: center;
+    }
+    h1 { margin: 0; font-size: 24px; }
+    .container { padding: 20px; }
+    .section {
+      background: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    input, select, button {
+      padding: 5px;
+      margin: 5px;
+      border-radius: 5px;
+      border: 1px solid #888;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { background-color: #0056b3; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: left;
+    }
+    .red-button {
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+    }
+    .logout {
+      float: right;
+      background-color: red;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>BALAJI ACTION BUILDEWELL PRIVATE LTD.</h1>
+</header>
+
+<div class="container">
+
+  <!-- Admin Controls -->
+  <div class="section">
+    <h2>Admin Controls</h2>
+    <button onclick="showCreateUser()">Create User</button>
+    <button onclick="document.getElementById('excelUpload').style.display='block'">Upload Excel File</button>
+    <button onclick="document.getElementById('imageUpload').style.display='block'">Upload Image</button>
+    <button onclick="changeAdminPassword()">Change Password</button>
+    <button class="logout" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- Create User -->
+  <div class="section" id="createUser" style="display:none;">
+    <h2>Create User</h2>
+    <input type="text" id="newUsername" placeholder="Username">
+    <input type="password" id="newPassword" placeholder="Password">
+    <button onclick="createUser()">Save User</button>
+    <h3>Existing Users</h3>
+    <table id="userTable"></table>
+  </div>
+
+  <!-- Upload Excel -->
+  <div class="section" id="excelUpload" style="display:none;">
+    <h2>Upload Excel Files</h2>
+    <select id="excelCategory">
+      <option>Wood PO</option>
+      <option>Contacts</option>
+      <option>ID Password</option>
+      <option>Shift Schedule</option>
+      <option>Intercom Number</option>
+    </select>
+    <input type="file" id="excelFile">
+    <button onclick="uploadExcel()">Upload</button>
+    <button onclick="deleteExcel()">Delete</button>
+  </div>
+
+  <!-- Upload Image -->
+  <div class="section" id="imageUpload" style="display:none;">
+    <h2>Upload Image</h2>
+    <input type="file" id="imageFile" accept="image/*">
+    <button onclick="uploadImage()">Upload</button>
+    <button onclick="deleteImage()">Delete</button>
+  </div>
+
+  <!-- View Shift Reports -->
+  <div class="section">
+    <h2>View All Shift Reports</h2>
+    <label>Date: <input type="date" id="filterDate"></label>
+    <label>Shift:
+      <select id="filterShift">
+        <option value="">All</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="General">General</option>
+      </select>
+    </label>
+    <label>Plant:
+      <select id="filterPlant">
+        <option value="">All</option>
+        <option value="Sitapur">Sitapur</option>
+        <option value="Rampur">Rampur</option>
+        <option value="Other">Other</option>
+      </select>
+    </label>
+    <button onclick="loadAllShiftReports()">Load Reports</button>
+    <div id="allShiftReports"></div>
+  </div>
+
+</div>
+
+<footer>
+  <p>&copy; ATHARVA CREATION</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+<script>
+  // Validate login
+  if (localStorage.getItem("loggedIn") !== "admin") location.href = "index.html";
+
+  function logout() {
+    localStorage.removeItem("loggedIn");
+    location.href = "index.html";
+  }
+
+  function showCreateUser() {
+    document.getElementById("createUser").style.display = "block";
+    loadUsers();
+  }
+
+  function createUser() {
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+    const name = document.getElementById("newUsername").value;
+    const pass = document.getElementById("newPassword").value;
+    if (!name || !pass) return alert("Enter all details");
+    users.push({ username: name, password: pass });
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("User created");
+    loadUsers();
+  }
+
+  function loadUsers() {
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+    const table = document.getElementById("userTable");
+    table.innerHTML = "<tr><th>Username</th><th>Change Password</th><th>Delete</th></tr>";
+    users.forEach((user, i) => {
+      table.innerHTML += `<tr>
+        <td>${user.username}</td>
+        <td><input type="text" id="pass${i}"><button onclick="changeUserPassword(${i})">Change</button></td>
+        <td><button onclick="deleteUser(${i})">Delete</button></td>
+      </tr>`;
+    });
+  }
+
+  function changeUserPassword(i) {
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+    users[i].password = document.getElementById("pass" + i).value;
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Password changed");
+  }
+
+  function deleteUser(i) {
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+    users.splice(i, 1);
+    localStorage.setItem("users", JSON.stringify(users));
+    loadUsers();
+  }
+
+  function changeAdminPassword() {
+    const newPass = prompt("Enter new admin password:");
+    if (newPass) {
+      localStorage.setItem("adminPassword", newPass);
+      alert("Admin password updated");
+    }
+  }
+
+  function uploadExcel() {
+    const file = document.getElementById("excelFile").files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, {type:'array'});
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(sheet, {header:1});
+      const cat = document.getElementById("excelCategory").value;
+      localStorage.setItem("excel_" + cat, JSON.stringify(json));
+      alert(cat + " uploaded");
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function deleteExcel() {
+    const cat = document.getElementById("excelCategory").value;
+    localStorage.removeItem("excel_" + cat);
+    alert(cat + " deleted");
+  }
+
+  function uploadImage() {
+    const file = document.getElementById("imageFile").files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      localStorage.setItem("uploadedImage", e.target.result);
+      alert("Image uploaded");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function deleteImage() {
+    localStorage.removeItem("uploadedImage");
+    alert("Image deleted");
+  }
+
+  function loadAllShiftReports() {
+    const date = document.getElementById("filterDate").value;
+    const shift = document.getElementById("filterShift").value;
+    const plant = document.getElementById("filterPlant").value;
+    const div = document.getElementById("allShiftReports");
+    div.innerHTML = "";
+
+    const keys = Object.keys(localStorage).filter(k => k.startsWith("shiftReport_"));
+    let found = 0;
+    keys.forEach(key => {
+      const report = JSON.parse(localStorage.getItem(key));
+      if (
+        (!date || report.date === date) &&
+        (!shift || report.shift === shift) &&
+        (!plant || report.plant === plant)
+      ) {
+        let html = `<div style="margin:10px 0;padding:10px;background:#f0f0f0;">
+          <b>Date:</b> ${report.date} | <b>Shift:</b> ${report.shift} | <b>Plant:</b> ${report.plant} | <b>Person:</b> ${report.person}<br><br>
+          <table><tr><th>Material</th><th>Security</th><th>SAP</th><th>Pending</th></tr>`;
+        report.data.forEach(row => {
+          html += `<tr>
+            <td>${row.material}</td>
+            <td>${row.sec}</td>
+            <td>${row.sap}</td>
+            <td>${row.sec - row.sap}</td>
+          </tr>`;
+        });
+        html += `</table><p><b>Total Token:</b> ${report.total} | <b>In Stock:</b> ${report.stock} | <b>Issued:</b> ${report.issued}</p></div>`;
+        div.innerHTML += html;
+        found++;
+      }
+    });
+    if (found === 0) div.innerHTML = "<p>No matching reports found.</p>";
+  }
+</script>
+
+</body>
+</html>
